@@ -22,7 +22,7 @@ public:
 
     PixelMap(const std::string& fileName)
     {
-        const unsigned error = lodepng::decode(buffer, w, h, mapFilePath, LodePNGColorType::LCT_GREY, 8);
+        const unsigned error = lodepng::decode(buffer, w, h, fileName, LodePNGColorType::LCT_GREY, 8);
         if (error) {
             std::cerr << "[Error] Could not load map. Decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
             std::abort();
@@ -66,19 +66,35 @@ public:
         return { yMin, yMax };
     }
 
-    std::optional<Point> findNeighborhood(unsigned x, unsigned y, Color c) const
+    template <typename Pred>
+    std::optional<Point> findNeighborhood(unsigned x, unsigned y, Pred pred) const
     {
         const auto [xMin, xMax] = clampRangeX(x, 1);
         const auto [yMin, yMax] = clampRangeY(y, 1);
 
-        for (unsigned iy = yMin; iy <= yMax; ++iy) {
-            for (unsigned ix = xMin; ix <= xMax; ++ix) {
-                if (get(ix, iy) == c)
-                    return std::make_optional<Point>(ix, iy);
-            }
-        }
+#define CHECK_RETURN(xx, yy)       \
+    if (pred(xx, yy, get(xx, yy))) \
+    return std::make_optional<Point>(xx, yy)
+        // prioritize adjacent pixels
+        CHECK_RETURN(xMin, y);
+        CHECK_RETURN(xMax, y);
+        CHECK_RETURN(x, yMin);
+        CHECK_RETURN(x, yMax);
+
+        // diagonals
+        CHECK_RETURN(xMin, yMin);
+        CHECK_RETURN(xMax, yMin);
+        CHECK_RETURN(xMin, yMax);
+        CHECK_RETURN(xMax, yMax);
 
         return std::nullopt;
+    }
+
+    std::optional<Point> findNeighborhood(unsigned x, unsigned y, Color c) const
+    {
+        return findNeighborhood(x, y, [c](unsigned, unsigned, Color c2) {
+            return c == c2;
+        });
     }
 };
 
@@ -133,33 +149,25 @@ Line traceBorder(PixelMap& pixels, Point start)
 
         pixels.set(p.x, p.y, MAX_OUTSIDE_COLOR);
 
-        // search 8-neighborhood
-        auto findNext = [&]() {
-            const auto [xMin, xMax] = pixels.clampRangeX(p.x, 1);
-            const auto [yMin, yMax] = pixels.clampRangeY(p.y, 1);
-            for (unsigned iy = yMin; iy <= yMax; ++iy) {
-                for (unsigned ix = xMin; ix <= xMax; ++ix) {
-                    if (pixels.get(ix, iy) == OUTSIDE_COLOR) {
-                        const auto [ixMin, ixMax] = pixels.clampRangeX(ix, 1);
-                        const auto [iyMin, iyMax] = pixels.clampRangeY(iy, 1);
-                        // check 4-neighborhood for lane
-                        if (pixels.get(ixMin, iy) > MAX_OUTSIDE_COLOR
-                            || pixels.get(ixMax, iy) > MAX_OUTSIDE_COLOR
-                            || pixels.get(ix, iyMin) > MAX_OUTSIDE_COLOR
-                            || pixels.get(ix, iyMax) > MAX_OUTSIDE_COLOR) {
-                            return std::make_optional<Point>(static_cast<int>(ix), static_cast<int>(iy));
-                        }
-                    }
-                }
+        auto nextPoint = pixels.findNeighborhood(p.x, p.y, [&](unsigned ix, unsigned iy, Color c) {
+            if (c == OUTSIDE_COLOR) {
+                const auto [ixMin, ixMax] = pixels.clampRangeX(ix, 1);
+                const auto [iyMin, iyMax] = pixels.clampRangeY(iy, 1);
+                // check 4-neighborhood for lane
+                return (pixels.get(ixMin, iy) > MAX_OUTSIDE_COLOR
+                    || pixels.get(ixMax, iy) > MAX_OUTSIDE_COLOR
+                    || pixels.get(ix, iyMin) > MAX_OUTSIDE_COLOR
+                    || pixels.get(ix, iyMax) > MAX_OUTSIDE_COLOR);
             }
-            return std::optional<Point>(std::nullopt);
-        };
 
-        if (auto nextPoint = findNext()) {
-            points.push_back(*nextPoint);
-        } else {
+			return false;
+        });
+
+        if (!nextPoint) {
             break;
         }
+
+        points.push_back(*nextPoint);
     }
 
     return Line { std::move(points) };
@@ -213,8 +221,8 @@ Map::Map(const std::string& mapFilePath)
         std::abort();
     }
     border1 = traceBorder(pixels, *border1Begin);
+    pixels.save("debug.png");
 
     std::cout << std::format("Borders have lengths {} and {}.\n", border0.points.size(), border1.points.size());
 }
-
 }
