@@ -1,0 +1,220 @@
+#include "map.hpp"
+
+#include <lodepng.h>
+
+#include <algorithm>
+#include <deque>
+#include <format>
+#include <iostream>
+#include <map>
+#include <optional>
+
+namespace game {
+using Color = unsigned char;
+constexpr Color OUTSIDE_COLOR = 0;
+constexpr Color MAX_OUTSIDE_COLOR = 75;
+constexpr Color LANE_COLOR = 255;
+
+class PixelMap {
+public:
+    unsigned w, h;
+    std::vector<unsigned char> buffer;
+
+    PixelMap(const std::string& fileName)
+    {
+        const unsigned error = lodepng::decode(buffer, w, h, mapFilePath, LodePNGColorType::LCT_GREY, 8);
+        if (error) {
+            std::cerr << "[Error] Could not load map. Decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+            std::abort();
+        }
+    }
+
+    void save(const std::string& fileName)
+    {
+        lodepng::State state;
+        lodepng::encode(fileName, buffer, w, h, LodePNGColorType::LCT_GREY, 8);
+    }
+
+    size_t index(unsigned x, unsigned y) const
+    {
+        return x + w * y;
+    }
+
+    Color get(unsigned x, unsigned y) const
+    {
+        return buffer[index(x, y)];
+    }
+
+    void set(unsigned x, unsigned y, Color c)
+    {
+        buffer[index(x, y)] = c;
+    }
+
+    std::pair<unsigned, unsigned> clampRangeX(unsigned x, unsigned offset) const
+    {
+        const unsigned xMin = x > offset ? x - offset : 0;
+        const unsigned xMax = x + offset < w ? x + offset : w;
+
+        return { xMin, xMax };
+    }
+
+    std::pair<unsigned, unsigned> clampRangeY(unsigned y, unsigned offset) const
+    {
+        const unsigned yMin = y > offset ? y - offset : 0;
+        const unsigned yMax = y + offset < h ? y + offset : h;
+
+        return { yMin, yMax };
+    }
+
+    std::optional<Point> findNeighborhood(unsigned x, unsigned y, Color c) const
+    {
+        const auto [xMin, xMax] = clampRangeX(x, 1);
+        const auto [yMin, yMax] = clampRangeY(y, 1);
+
+        for (unsigned iy = yMin; iy <= yMax; ++iy) {
+            for (unsigned ix = xMin; ix <= xMax; ++ix) {
+                if (get(ix, iy) == c)
+                    return std::make_optional<Point>(ix, iy);
+            }
+        }
+
+        return std::nullopt;
+    }
+};
+
+Line makeLine(std::vector<Point> points)
+{
+    std::vector<Point> remainingPoints = std::move(points);
+
+    // use deque because we build chains starting from a random point
+    std::deque<Point> pixelChain { remainingPoints.back() };
+    remainingPoints.pop_back();
+
+    std::vector<IType> frontDists;
+    std::vector<IType> backDists;
+
+    auto updateDists = [&](Point o, std::vector<IType>& dists) {
+        dists.clear();
+        for (Point p : remainingPoints)
+            dists.push_back(math::distSq(o, p));
+    };
+
+    while (!remainingPoints.empty()) {
+        updateDists(pixelChain.front(), frontDists);
+        updateDists(pixelChain.back(), backDists);
+
+        auto frontDistIt = std::min_element(frontDists.begin(), frontDists.end());
+        auto backDistIt = std::min_element(backDists.begin(), backDists.end());
+
+        size_t idx = 0;
+        if (*frontDistIt <= *backDistIt) {
+            idx = std::distance(frontDists.begin(), frontDistIt);
+            pixelChain.push_front(remainingPoints[idx]);
+        } else {
+            idx = std::distance(backDists.begin(), backDistIt);
+            pixelChain.push_back(remainingPoints[idx]);
+        }
+
+        // remove pixel by moving it to the end since the order does not matter
+        remainingPoints[idx] = remainingPoints.back();
+        remainingPoints.pop_back();
+    }
+
+    return Line { std::vector<Point>(pixelChain.begin(), pixelChain.end()) };
+}
+
+Line traceBorder(PixelMap& pixels, Point start)
+{
+    std::vector<Point> points;
+    points.emplace_back(start);
+
+    while (true) {
+        Point p = points.back();
+
+        pixels.set(p.x, p.y, MAX_OUTSIDE_COLOR);
+
+        // search 8-neighborhood
+        auto findNext = [&]() {
+            const auto [xMin, xMax] = pixels.clampRangeX(p.x, 1);
+            const auto [yMin, yMax] = pixels.clampRangeY(p.y, 1);
+            for (unsigned iy = yMin; iy <= yMax; ++iy) {
+                for (unsigned ix = xMin; ix <= xMax; ++ix) {
+                    if (pixels.get(ix, iy) == OUTSIDE_COLOR) {
+                        const auto [ixMin, ixMax] = pixels.clampRangeX(ix, 1);
+                        const auto [iyMin, iyMax] = pixels.clampRangeY(iy, 1);
+                        // check 4-neighborhood for lane
+                        if (pixels.get(ixMin, iy) > MAX_OUTSIDE_COLOR
+                            || pixels.get(ixMax, iy) > MAX_OUTSIDE_COLOR
+                            || pixels.get(ix, iyMin) > MAX_OUTSIDE_COLOR
+                            || pixels.get(ix, iyMax) > MAX_OUTSIDE_COLOR) {
+                            return std::make_optional<Point>(static_cast<int>(ix), static_cast<int>(iy));
+                        }
+                    }
+                }
+            }
+            return std::optional<Point>(std::nullopt);
+        };
+
+        if (auto nextPoint = findNext()) {
+            points.push_back(*nextPoint);
+        } else {
+            break;
+        }
+    }
+
+    return Line { std::move(points) };
+}
+
+Map::Map(const std::string& mapFilePath)
+    : width(0)
+    , height(0)
+{
+    PixelMap pixels(mapFilePath);
+
+    width = pixels.w;
+    height = pixels.h;
+
+    // use map because in the end we sort the goals by color
+    std::map<unsigned char, std::vector<Point>> col_to_goals;
+
+    for (unsigned y = 0; y < pixels.h; ++y) {
+        for (unsigned x = 0; x < pixels.w; ++x) {
+            const unsigned char c = pixels.get(x, y);
+            if (c > MAX_OUTSIDE_COLOR && c != LANE_COLOR) {
+                col_to_goals[c].push_back(Point { static_cast<IType>(x), static_cast<IType>(y) });
+            }
+        }
+    }
+
+    goals.reserve(col_to_goals.size());
+    for (auto& [c, points] : col_to_goals) {
+        std::cout << (int)c << "\n";
+        goals.emplace_back(makeLine(points));
+    }
+
+    if (goals.size() < 2) {
+        std::cerr << "[Error] Track has less than two goals.\n";
+        std::abort();
+    } else {
+        std::cout << std::format("Found {} goals.\n", goals.size());
+    }
+
+    const Line& start = goals.front();
+    const auto border0Begin = pixels.findNeighborhood(start.points.front().x, start.points.front().y, OUTSIDE_COLOR);
+    if (!border0Begin) {
+        std::cerr << "[Error] Could not find the 1st border.\n";
+        std::abort();
+    }
+    border0 = traceBorder(pixels, *border0Begin);
+
+    const auto border1Begin = pixels.findNeighborhood(start.points.back().x, start.points.back().y, OUTSIDE_COLOR);
+    if (!border1Begin) {
+        std::cerr << "[Error] Could not find the 2nd border.\n";
+        std::abort();
+    }
+    border1 = traceBorder(pixels, *border1Begin);
+
+    std::cout << std::format("Borders have lengths {} and {}.\n", border0.points.size(), border1.points.size());
+}
+
+}
