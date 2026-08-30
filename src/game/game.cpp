@@ -73,7 +73,7 @@ void Racetrack::run()
             // check if goal was reached
             if (m_map.goals[state.goal].intersect(seg)) {
                 ++state.goal;
-                if (state.goal >= m_map.goals.size()) {
+                if (state.goal >= static_cast<int>(m_map.goals.size())) {
                     std::cout << std::format("Player {} finished!\n", player);
                     finished = true;
                 } else {

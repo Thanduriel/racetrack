@@ -10,6 +10,16 @@ set_target_properties(racetrack PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
 
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+    set(COMPILATION_OPTIONS 
+        $<$<CONFIG:Debug>:-Wall;-pedantic>
+        $<$<CONFIG:RelWithDebInfo>:>
+        $<$<CONFIG:Release>: -O3;-DNDEBUG;-march=native > 
+        $<$<CONFIG:MinSizeRel>:>
+    )
+    target_compile_options( racetrack PUBLIC "${COMPILATION_OPTIONS}" )
+endif()
+
 add_library(lodepng STATIC "dependencies/lodepng/lodepng.cpp")
 target_include_directories(lodepng PUBLIC dependencies/lodepng)
 target_link_libraries(racetrack PRIVATE lodepng)
