@@ -10,10 +10,21 @@
 #include <optional>
 
 namespace game {
+
 using Color = unsigned char;
 constexpr Color OUTSIDE_COLOR = 0;
 constexpr Color MAX_OUTSIDE_COLOR = 75;
 constexpr Color LANE_COLOR = 255;
+
+bool Line::intersect(const LineSegment& segment) const
+{
+    for (size_t i = 0; i + 1 < points.size(); ++i) {
+        if (math::segmentsIntersect({ points[i], points[i + 1] }, segment))
+            return true;
+    }
+
+    return false;
+}
 
 class PixelMap {
 public:
@@ -139,7 +150,7 @@ Line makeLine(std::vector<Point> points)
     return Line { std::vector<Point>(pixelChain.begin(), pixelChain.end()) };
 }
 
-Line traceBorder(PixelMap& pixels, Point start)
+Line traceBoundary(PixelMap& pixels, Point start)
 {
     std::vector<Point> points;
     points.emplace_back(start);
@@ -160,7 +171,7 @@ Line traceBorder(PixelMap& pixels, Point start)
                     || pixels.get(ix, iyMax) > MAX_OUTSIDE_COLOR);
             }
 
-			return false;
+            return false;
         });
 
         if (!nextPoint) {
@@ -196,7 +207,6 @@ Map::Map(const std::string& mapFilePath)
 
     goals.reserve(col_to_goals.size());
     for (auto& [c, points] : col_to_goals) {
-        std::cout << (int)c << "\n";
         goals.emplace_back(makeLine(points));
     }
 
@@ -207,22 +217,32 @@ Map::Map(const std::string& mapFilePath)
         std::cout << std::format("Found {} goals.\n", goals.size());
     }
 
-    const Line& start = goals.front();
-    const auto border0Begin = pixels.findNeighborhood(start.points.front().x, start.points.front().y, OUTSIDE_COLOR);
-    if (!border0Begin) {
-        std::cerr << "[Error] Could not find the 1st border.\n";
-        std::abort();
-    }
-    border0 = traceBorder(pixels, *border0Begin);
+    // first goal is start and finish
+    start = goals.front();
+    goals.emplace_back(std::move(goals.front()));
+    goals.erase(goals.begin());
 
-    const auto border1Begin = pixels.findNeighborhood(start.points.back().x, start.points.back().y, OUTSIDE_COLOR);
-    if (!border1Begin) {
-        std::cerr << "[Error] Could not find the 2nd border.\n";
+    const Line& start = goals.front();
+    const auto boundary0Begin = pixels.findNeighborhood(start.points.front().x, start.points.front().y, OUTSIDE_COLOR);
+    if (!boundary0Begin) {
+        std::cerr << "[Error] Could not find the 1st boundary.\n";
         std::abort();
     }
-    border1 = traceBorder(pixels, *border1Begin);
+    boundary0 = traceBoundary(pixels, *boundary0Begin);
+
+    const auto boundary1Begin = pixels.findNeighborhood(start.points.back().x, start.points.back().y, OUTSIDE_COLOR);
+    if (!boundary1Begin) {
+        std::cerr << "[Error] Could not find the 2nd boundary.\n";
+        std::abort();
+    }
+    boundary1 = traceBoundary(pixels, *boundary1Begin);
     pixels.save("debug.png");
 
-    std::cout << std::format("Borders have lengths {} and {}.\n", border0.points.size(), border1.points.size());
+    std::cout << std::format("Boundarys have lengths {} and {}.\n", boundary0.points.size(), boundary1.points.size());
+}
+
+bool Map::intersectBoundary(const LineSegment& segment) const
+{
+    return boundary0.intersect(segment) || boundary1.intersect(segment);
 }
 }

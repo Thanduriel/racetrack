@@ -2,29 +2,31 @@
 
 #include "../math/commontypes.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace game
-{
-	// line on the lattice described by a sequence of points
-	struct Line
-	{
-		std::vector<Point> points;
-	};
+namespace game {
+// line on the lattice described by a sequence of points
+struct Line {
+    std::vector<Point> points;
 
-	// the map or actual racetrack
-	class Map
-	{
-	public:
-		Map(const std::string &mapFilePath);
+	bool intersect(const LineSegment& segment) const;
+};
 
-		unsigned width;
-		unsigned height;
+// the map or actual racetrack
+class Map {
+public:
+    Map(const std::string& mapFilePath);
 
-		Line border0;
-		Line border1;
+	bool intersectBoundary(const LineSegment& segment) const;
 
-		std::vector<Line> goals;
-	};
+    unsigned width;
+    unsigned height;
+
+    Line boundary0;
+    Line boundary1;
+
+	Line start;
+    std::vector<Line> goals;
+};
 }
