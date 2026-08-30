@@ -10,6 +10,8 @@ namespace game {
 struct Line {
     std::vector<Point> points;
 
+	// remove redundant points
+	void optimize();
 	bool intersect(const LineSegment& segment) const;
 };
 

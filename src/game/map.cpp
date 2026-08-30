@@ -26,6 +26,28 @@ bool Line::intersect(const LineSegment& segment) const
     return false;
 }
 
+void Line::optimize()
+{
+    std::vector<Point> pointsOptimized;
+    pointsOptimized.reserve(points.size());
+    // first point is always needed
+    pointsOptimized.push_back(points.front());
+
+    // check if subsequent points lie on a line
+    for (size_t i = 2; i < points.size(); ++i) {
+        if (!math::onSegment({ pointsOptimized.back(), points[i] }, points[i - 1])) {
+            pointsOptimized.push_back(points[i-1]);
+        }
+    }
+
+    // last point
+    pointsOptimized.push_back(points.back());
+
+ //   std::cout << std::format("{} -> {}\n", points.size(), pointsOptimized.size());
+    pointsOptimized.shrink_to_fit();
+    points = std::move(pointsOptimized);
+}
+
 class PixelMap {
 public:
     unsigned w, h;
@@ -209,6 +231,9 @@ Map::Map(const std::string& mapFilePath)
     for (auto& [c, points] : col_to_goals) {
         goals.emplace_back(makeLine(points));
     }
+    for (Line& line : goals){
+        line.optimize();
+    }
 
     if (goals.size() < 2) {
         std::cerr << "[Error] Track has less than two goals.\n";
@@ -229,6 +254,7 @@ Map::Map(const std::string& mapFilePath)
         std::abort();
     }
     boundary0 = traceBoundary(pixels, *boundary0Begin);
+    boundary0.optimize();
 
     const auto boundary1Begin = pixels.findNeighborhood(start.points.back().x, start.points.back().y, OUTSIDE_COLOR);
     if (!boundary1Begin) {
@@ -236,7 +262,8 @@ Map::Map(const std::string& mapFilePath)
         std::abort();
     }
     boundary1 = traceBoundary(pixels, *boundary1Begin);
-    pixels.save("debug.png");
+    boundary1.optimize();
+    //pixels.save("debug.png");
 
     std::cout << std::format("Boundarys have lengths {} and {}.\n", boundary0.points.size(), boundary1.points.size());
 }

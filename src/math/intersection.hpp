@@ -24,7 +24,7 @@ T orient(const LineSeg<T>& AB, Vec<T> C)
 
 // Check if P lies on segment AB (assuming collinear)
 template <typename T>
-bool onSegment(LineSeg<T> AB, Vec<T> P)
+bool onSegmentCollinear(LineSeg<T> AB, Vec<T> P)
 {
     const Vec<T>& A = AB.first;
     const Vec<T>& B = AB.second;
@@ -50,15 +50,20 @@ bool segmentsIntersect(const LineSeg<T> AB, const LineSeg<T> CD)
         return true;
 
     // Collinear cases (need to check bounding boxes)
-    if ((d1 == 0) && onSegment(CD, A))
+    if ((d1 == 0) && onSegmentCollinear(CD, A))
         return true;
-    if ((d2 == 0) && onSegment(CD, B))
+    if ((d2 == 0) && onSegmentCollinear(CD, B))
         return true;
-    if ((d3 == 0) && onSegment(AB, C))
+    if ((d3 == 0) && onSegmentCollinear(AB, C))
         return true;
-    if ((d4 == 0) && onSegment(AB, D))
+    if ((d4 == 0) && onSegmentCollinear(AB, D))
         return true;
 
     return false;
+}
+
+template<typename T>
+bool onSegment(const LineSeg<T>& AB, const Vec<T> P){
+    return orient(AB, P) == 0 && onSegmentCollinear(AB, P);
 }
 }

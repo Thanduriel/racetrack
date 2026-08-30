@@ -5,6 +5,7 @@
 
 #include <format>
 #include <iostream>
+#include <chrono>
 
 namespace game {
 
@@ -30,9 +31,14 @@ void Racetrack::run()
     bool finished = false;
     size_t step = 0;
 
+	auto lastTime = std::chrono::high_resolution_clock::now();
+
     while (!finished) {
         if (step % 10000 == 0) {
-            std::cout << step << "\n";
+			auto now = std::chrono::high_resolution_clock::now();
+			const float passed = std::chrono::duration<float>(now - lastTime).count();
+            std::cout << std::format("step {}, {}s\n", step, passed);
+			lastTime = now;
         }
 
         bool noneActive = true;
