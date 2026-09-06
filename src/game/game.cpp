@@ -1,21 +1,20 @@
 #include "game.hpp"
-#include "../bots/snail.hpp"
 #include "../math/intersection.hpp"
-#include "map.hpp"
 
+#include <chrono>
 #include <format>
 #include <iostream>
-#include <chrono>
 
 namespace game {
 
-Racetrack::Racetrack(const std::string& mapFilePath, int numPlayers)
-    : m_map(mapFilePath)
+Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players)
+    : m_map(map),
+	m_players(std::move(players))
 {
     const size_t startLength = m_map.start.points.size();
+	const size_t numPlayers = m_players.size();
 
-    for (int i = 0; i < numPlayers; ++i) {
-        m_players.push_back(std::make_unique<bots::Snail>(static_cast<uint32_t>(i)));
+    for (size_t i = 0; i < numPlayers; ++i) {
         // Spread players evenly along start with equal distance between
         // players and the walls.
         const size_t p = i * startLength / (numPlayers + 2);
@@ -31,14 +30,14 @@ void Racetrack::run()
     bool finished = false;
     size_t step = 0;
 
-	auto lastTime = std::chrono::high_resolution_clock::now();
+    auto lastTime = std::chrono::high_resolution_clock::now();
 
     while (!finished) {
         if (step % 10000 == 0) {
-			auto now = std::chrono::high_resolution_clock::now();
-			const float passed = std::chrono::duration<float>(now - lastTime).count();
+            auto now = std::chrono::high_resolution_clock::now();
+            const float passed = std::chrono::duration<float>(now - lastTime).count();
             std::cout << std::format("step {}, {}s\n", step, passed);
-			lastTime = now;
+            lastTime = now;
         }
 
         bool noneActive = true;
@@ -91,7 +90,7 @@ void Racetrack::run()
         ++step;
     }
 
-	std::cout << std::format("Game ended after {} steps\n", step);
+    std::cout << std::format("Game ended after {} steps\n", step);
 }
 
 }

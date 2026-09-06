@@ -13,7 +13,7 @@ class Map;
 struct PlayerState {
     Point position;
     Direction velocity;
-    int goal; //< next goal that has to be past
+    int goal; //< next goal that has to be passed
     bool active;
 };
 
@@ -42,16 +42,4 @@ public:
     virtual Direction getAction(const GameState& state, const Map& map, size_t player) = 0;
 };
 
-class Player {
-public:
-    Player(const std::string& name)
-        : m_name(name)
-    {
-    }
-
-    const std::string& name() const { return m_name; }
-
-private:
-    std::string m_name;
-};
 }
