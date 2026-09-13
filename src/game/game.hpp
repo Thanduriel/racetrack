@@ -18,9 +18,9 @@ public:
 
 private:
 	const Map& m_map;
-	//std::vector<Player> m_players;
 	std::vector<std::unique_ptr<PlayerController>> m_players;
 	GameState m_state;
+	GameHistory m_history;
 };
 
 }

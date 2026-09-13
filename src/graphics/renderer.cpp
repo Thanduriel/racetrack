@@ -2,6 +2,14 @@
 
 namespace graphics {
 
+constexpr float gridThickness = 1.f;
+constexpr float boundaryThickness = 2.f;
+constexpr float historyThickness = 2.f;
+constexpr float goalThickness = 2.f;
+
+constexpr sf::Color gridColor(120, 120, 120);
+constexpr sf::Color historyColor(120, 180, 160);
+
 Renderer::Renderer(const game::Map& map)
     : m_map(map)
     , m_scale(14.f)
@@ -11,11 +19,11 @@ Renderer::Renderer(const game::Map& map)
 {
 }
 
-Direction Renderer::getAction(const game::GameState& state)
+Direction Renderer::getAction(const game::GameState& state, const std::vector<game::Line>& history)
 {
     while (m_window.isOpen()) {
         const sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
-		const sf::Vector2f mouseWorld = m_window.mapPixelToCoords(mousePos);
+        const sf::Vector2f mouseWorld = m_window.mapPixelToCoords(mousePos);
         // -1 to invert toScreenSpace, + 0.5 to get nodes, not cells when truncating (round to 0)
         const auto pos = mouseWorld / m_scale - sf::Vector2f(0.5f, 0.5f);
         const Point p = { static_cast<int>(pos.x), static_cast<int>(pos.y) };
@@ -35,6 +43,7 @@ Direction Renderer::getAction(const game::GameState& state)
 
         m_window.clear(sf::Color::White);
         draw(state);
+        draw(history);
         // highlight possible move on hover
         if (isValidAction) {
             const float buttonSize = m_scale * 0.75f;
@@ -59,29 +68,25 @@ void Renderer::draw(const game::GameState& state)
 {
     // map
     // grid
-    constexpr float gridThickness = 1.f;
-    constexpr sf::Color gray(120, 120, 120);
     sf::RectangleShape lineVertical({ gridThickness, m_map.height * m_scale });
-    lineVertical.setFillColor(gray);
-    for (int x = 0; x < m_map.width + 1; ++x) {
-        lineVertical.setPosition(toScreenSpace({ x, 0 }));
+    lineVertical.setFillColor(gridColor);
+    for (unsigned x = 0; x < m_map.width + 1; ++x) {
+        lineVertical.setPosition(toScreenSpace({ static_cast<int>(x), 0 }));
         m_window.draw(lineVertical);
     }
 
     sf::RectangleShape lineHorizontal({ m_map.width * m_scale, gridThickness });
-    lineHorizontal.setFillColor(gray);
-    for (int y = 0; y < m_map.height + 1; ++y) {
-        lineHorizontal.setPosition(toScreenSpace({ 0, y }));
+    lineHorizontal.setFillColor(gridColor);
+    for (unsigned y = 0; y < m_map.height + 1; ++y) {
+        lineHorizontal.setPosition(toScreenSpace({ 0, static_cast<int>(y) }));
         m_window.draw(lineHorizontal);
     }
 
     // boundary
-    constexpr float boundaryThickness = 2.f;
     draw(m_map.boundary0, sf::Color::Black, boundaryThickness);
     draw(m_map.boundary1, sf::Color::Black, boundaryThickness);
 
     // goals
-    constexpr float goalThickness = 2.f;
     for (const game::Line& goal : m_map.goals) {
         draw(goal, sf::Color::Blue, goalThickness);
     }
@@ -113,14 +118,26 @@ void Renderer::draw(const game::GameState& state)
     }
 }
 
-void Renderer::draw(const game::Line& line, sf::Color color, float thickness)
+void Renderer::draw(const game::GameHistory& history)
+{
+    for (const game::Line& line : history) {
+        draw(line, historyColor, historyThickness, m_scale * 0.75f);
+    }
+}
+
+void Renderer::draw(const game::Line& line, sf::Color color, float thickness, float pointSize)
 {
     std::vector<sf::Vertex> lineF;
     lineF.reserve(line.points.size() * 2 + 2);
     for (size_t i = 1; i < line.points.size(); ++i) {
         const sf::Vector2f p0 = toScreenSpace(line.points[i - 1]);
         const sf::Vector2f p1 = toScreenSpace(line.points[i]);
-        const sf::Vector2f d = (p1 - p0).normalized();
+        const sf::Vector2f diff = (p1 - p0);
+        const float l = diff.length();
+        if (l == 0.f) {
+            continue;
+        }
+        const sf::Vector2f d = diff / l;
         const sf::Vector2f ort = { -d.y, d.x };
         lineF.emplace_back(p0 + ort * thickness, color);
         lineF.emplace_back(p0 - ort * thickness, color);
@@ -129,6 +146,24 @@ void Renderer::draw(const game::Line& line, sf::Color color, float thickness)
     }
 
     m_window.draw(lineF.data(), lineF.size(), sf::PrimitiveType::TriangleStrip);
+
+    if (pointSize > 0.f) {
+        sf::RectangleShape crossBar({ pointSize, thickness });
+        crossBar.setOrigin({ pointSize * 0.5f, thickness * 0.5f });
+        crossBar.setFillColor(color);
+
+        crossBar.rotate(sf::degrees(45));
+        for(const Point& p : line.points) {
+            crossBar.setPosition(toScreenSpace(p));
+            m_window.draw(crossBar);
+        }
+        
+        crossBar.rotate(sf::degrees(90));
+        for(const Point& p : line.points) {
+            crossBar.setPosition(toScreenSpace(p));
+            m_window.draw(crossBar);
+        }
+    }
 }
 
 }

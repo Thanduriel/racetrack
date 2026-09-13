@@ -19,6 +19,7 @@ const PlayerState& GameState::getActive() const
 Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players)
     : m_map(map)
     , m_players(std::move(players))
+    , m_history(m_players.size())
 {
     const size_t startLength = m_map.start.points.size();
     const size_t numPlayers = m_players.size();
@@ -31,6 +32,8 @@ Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerControlle
             .velocity = { },
             .goal = 0,
             .active = true });
+
+        m_history[i].points.push_back(m_map.start.points[p]);
     }
 }
 
@@ -51,6 +54,7 @@ void Racetrack::run()
 
         bool noneActive = true;
         for (size_t player = 0; player < m_players.size(); ++player) {
+            m_state.activePlayer = player;
             PlayerState& state = m_state.getActive();
             if (state.active) {
                 noneActive = false;
@@ -59,7 +63,7 @@ void Racetrack::run()
             }
 
             // player decision
-            const Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map);
+            const Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map, m_history);
             if (acceleration.lenSq() > 2) {
                 std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", m_state.activePlayer, acceleration);
             } else {
@@ -69,9 +73,12 @@ void Racetrack::run()
             // movement step
             Point prevPos = state.position;
             state.position += state.velocity;
-            const LineSegment seg = { prevPos, state.position };
+
+            // record history
+            m_history[player].points.push_back(state.position);
 
             // check out of bounds
+            const LineSegment seg = { prevPos, state.position };
             if (m_map.intersectBoundary(seg)) {
                 state.active = false;
                 // skip goal check

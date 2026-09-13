@@ -4,7 +4,7 @@ project (Racetrack)
 OPTION(WITH_GRAPHICS "Enable graphical interface." OFF)
 
 # find all source and header files
-file(GLOB_RECURSE SOURCE_FILES "main.cpp" "src/game/*.cpp" "src/math/*.cpp" "src/bots/*.cpp")
+file(GLOB_RECURSE SOURCE_FILES "src/main.cpp" "src/game/*.cpp" "src/math/*.cpp" "src/bots/*.cpp")
 
 if (WITH_GRAPHICS)
     file(GLOB_RECURSE GRAPHICS_SOURCE_FILES "src/graphics/*.cpp" "src/graphics/*.hpp")
@@ -33,11 +33,11 @@ target_link_libraries(racetrack PRIVATE lodepng)
 
 if (WITH_GRAPHICS)
     target_compile_definitions(racetrack PRIVATE "WITH_GRAPHICS")
-    set(SFML_BUILD_NETWORK OFF CACHE BOOL "")
-    set(SFML_BUILD_AUDIO OFF CACHE BOOL "")
-    set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "")
-    set(SFML_BUILD_DOC OFF CACHE BOOL "")
-    set(SFML_BUILD_TEST_SUITE OFF CACHE BOOL "")
+    set(SFML_BUILD_NETWORK OFF)
+    set(SFML_BUILD_AUDIO OFF)
+    set(SFML_BUILD_EXAMPLES OFF)
+    set(SFML_BUILD_DOC OFF)
+    set(SFML_BUILD_TEST_SUITE OFF)
     include(FetchContent)
     FetchContent_Declare(SFML
         GIT_REPOSITORY https://github.com/SFML/SFML.git

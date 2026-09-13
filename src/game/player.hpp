@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../math/commontypes.hpp"
+#include "map.hpp"
 
 #include <array>
 #include <string>
@@ -8,7 +9,7 @@
 
 namespace game {
 
-class Map;
+using GameHistory = std::vector<Line>;
 
 struct PlayerState {
     Point position;
@@ -45,7 +46,7 @@ class PlayerController {
 public:
     virtual ~PlayerController() = default;
     virtual std::string name() = 0;
-    virtual Direction getAction(const GameState& state, const Map& map) = 0;
+    virtual Direction getAction(const GameState& state, const Map& map, const GameHistory& history) = 0;
 };
 
 }

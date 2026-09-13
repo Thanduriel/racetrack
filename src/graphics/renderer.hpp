@@ -15,12 +15,13 @@ namespace graphics {
 	public:
 		Renderer(const game::Map& map);
 
-		Direction getAction(const game::GameState& state);
+		Direction getAction(const game::GameState& state, const game::GameHistory& history);
 	private:
 		sf::Vector2f toScreenSpace(Point p) const;
 
 		void draw(const game::GameState& state);
-		void draw(const game::Line& line, sf::Color color, float thickness);
+		void draw(const std::vector<game::Line>& history);
+		void draw(const game::Line& line, sf::Color color, float thickness, float pointSize = 0.f);
 
 		const game::Map& m_map;
 		float m_scale; // pixels per lattice unit

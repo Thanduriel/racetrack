@@ -16,7 +16,7 @@ Snail::Snail(uint32_t seed)
 
 std::string Snail::name() { return "Snail"; }
 
-Direction Snail::getAction(const GameState& gameState, const Map& map)
+Direction Snail::getAction(const GameState& gameState, const Map& map, const GameHistory& history)
 {
     const PlayerState& state = gameState.getActive();
 
