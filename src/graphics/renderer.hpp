@@ -15,11 +15,11 @@ namespace graphics {
 	public:
 		Renderer(const game::Map& map);
 
-		Direction getAction(const game::GameState& state, size_t player);
+		Direction getAction(const game::GameState& state);
 	private:
 		sf::Vector2f toScreenSpace(Point p) const;
 
-		void draw(const game::GameState& state, size_t player);
+		void draw(const game::GameState& state);
 		void draw(const game::Line& line, sf::Color color, float thickness);
 
 		const game::Map& m_map;

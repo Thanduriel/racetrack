@@ -13,7 +13,7 @@ public:
 	Snail(uint32_t seed);
 
     std::string name() override;
-    Direction getAction(const game::GameState& state, const game::Map& map, size_t player) override;
+    Direction getAction(const game::GameState& state, const game::Map& map) override;
 
 private:
 	int m_prevGoal;

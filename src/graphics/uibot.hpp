@@ -9,7 +9,7 @@ public:
     UIBot(graphics::Renderer& renderer);
 
     std::string name() override;
-    Direction getAction(const game::GameState& state, const game::Map& map, size_t player) override;
+    Direction getAction(const game::GameState& state, const game::Map& map) override;
 
 private:
     graphics::Renderer& m_renderer;

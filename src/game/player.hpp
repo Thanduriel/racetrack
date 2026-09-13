@@ -17,7 +17,13 @@ struct PlayerState {
     bool active;
 };
 
-using GameState = std::vector<PlayerState>;
+struct GameState {
+    std::vector<PlayerState> playerStates;
+    size_t activePlayer;
+
+    PlayerState& getActive();
+    const PlayerState& getActive() const;
+};
 
 constexpr std::array<Direction, 9> ACTIONS = { { { 0, 0 },
     { 0, -1 },
@@ -39,7 +45,7 @@ class PlayerController {
 public:
     virtual ~PlayerController() = default;
     virtual std::string name() = 0;
-    virtual Direction getAction(const GameState& state, const Map& map, size_t player) = 0;
+    virtual Direction getAction(const GameState& state, const Map& map) = 0;
 };
 
 }

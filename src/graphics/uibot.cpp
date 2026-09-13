@@ -12,9 +12,9 @@ std::string UIBot::name()
     return "user-input";
 }
 
-Direction UIBot::getAction(const game::GameState& state, const game::Map& map, size_t player)
+Direction UIBot::getAction(const game::GameState& state, const game::Map& map)
 {
-	return m_renderer.getAction(state, player);
+	return m_renderer.getAction(state);
 }
 
 }

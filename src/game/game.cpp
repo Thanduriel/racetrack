@@ -7,18 +7,27 @@
 
 namespace game {
 
+PlayerState& GameState::getActive()
+{
+    return playerStates[activePlayer];
+}
+const PlayerState& GameState::getActive() const
+{
+    return playerStates[activePlayer];
+}
+
 Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players)
-    : m_map(map),
-	m_players(std::move(players))
+    : m_map(map)
+    , m_players(std::move(players))
 {
     const size_t startLength = m_map.start.points.size();
-	const size_t numPlayers = m_players.size();
+    const size_t numPlayers = m_players.size();
 
     for (size_t i = 0; i < numPlayers; ++i) {
         // Spread players evenly along start with equal distance between
         // players and the walls.
         const size_t p = i * startLength / (numPlayers + 2);
-        m_playerStates.push_back({ .position = m_map.start.points[p],
+        m_state.playerStates.push_back({ .position = m_map.start.points[p],
             .velocity = { },
             .goal = 0,
             .active = true });
@@ -42,7 +51,7 @@ void Racetrack::run()
 
         bool noneActive = true;
         for (size_t player = 0; player < m_players.size(); ++player) {
-            PlayerState& state = m_playerStates[player];
+            PlayerState& state = m_state.getActive();
             if (state.active) {
                 noneActive = false;
             } else {
@@ -50,9 +59,9 @@ void Racetrack::run()
             }
 
             // player decision
-            const Direction acceleration = m_players[player]->getAction(m_playerStates, m_map, player);
+            const Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map);
             if (acceleration.lenSq() > 2) {
-                std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", player, acceleration);
+                std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", m_state.activePlayer, acceleration);
             } else {
                 state.velocity += acceleration;
             }

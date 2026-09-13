@@ -11,7 +11,7 @@ Renderer::Renderer(const game::Map& map)
 {
 }
 
-Direction Renderer::getAction(const game::GameState& state, size_t player)
+Direction Renderer::getAction(const game::GameState& state)
 {
     while (m_window.isOpen()) {
         const sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
@@ -19,7 +19,7 @@ Direction Renderer::getAction(const game::GameState& state, size_t player)
         // -1 to invert toScreenSpace, + 0.5 to get nodes, not cells when truncating (round to 0)
         const auto pos = mouseWorld / m_scale - sf::Vector2f(0.5f, 0.5f);
         const Point p = { static_cast<int>(pos.x), static_cast<int>(pos.y) };
-        const game::PlayerState& current = state[player];
+        const game::PlayerState& current = state.getActive();
         const Direction d = p - (current.position + current.velocity);
         const bool isValidAction = d.lenSq() <= 2;
 
@@ -34,7 +34,7 @@ Direction Renderer::getAction(const game::GameState& state, size_t player)
         }
 
         m_window.clear(sf::Color::White);
-        draw(state, player);
+        draw(state);
         // highlight possible move on hover
         if (isValidAction) {
             const float buttonSize = m_scale * 0.75f;
@@ -55,7 +55,7 @@ sf::Vector2f Renderer::toScreenSpace(Point p) const
     return { (p.x + 1) * m_scale, (p.y + 1) * m_scale };
 }
 
-void Renderer::draw(const game::GameState& state, size_t player)
+void Renderer::draw(const game::GameState& state)
 {
     // map
     // grid
@@ -91,13 +91,13 @@ void Renderer::draw(const game::GameState& state, size_t player)
     sf::CircleShape playerShape(playerSize);
     playerShape.setOrigin({ playerSize, playerSize });
     playerShape.setFillColor(sf::Color::Red);
-    for (const game::PlayerState& playerState : state) {
+    for (const game::PlayerState& playerState : state.playerStates) {
         playerShape.setPosition(toScreenSpace(playerState.position));
         m_window.draw(playerShape);
     }
 
     // current player
-    const game::PlayerState& current = state[player];
+    const game::PlayerState& current = state.getActive();
     const Point dest = current.position + current.velocity;
     const game::Line move { .points = { current.position, dest } };
     draw(move, sf::Color::Green, 2.f);
