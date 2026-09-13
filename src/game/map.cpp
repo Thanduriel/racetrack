@@ -203,6 +203,9 @@ Line traceBoundary(PixelMap& pixels, Point start)
         points.push_back(*nextPoint);
     }
 
+    // close the loop
+    points.push_back(points.front());
+
     return Line { std::move(points) };
 }
 
@@ -231,9 +234,6 @@ Map::Map(const std::string& mapFilePath)
     for (auto& [c, points] : col_to_goals) {
         goals.emplace_back(makeLine(points));
     }
-    for (Line& line : goals){
-        line.optimize();
-    }
 
     if (goals.size() < 2) {
         std::cerr << "[Error] Track has less than two goals.\n";
@@ -246,6 +246,11 @@ Map::Map(const std::string& mapFilePath)
     start = goals.front();
     goals.emplace_back(std::move(goals.front()));
     goals.erase(goals.begin());
+
+    // optimize now because the start line should be segmented to determine start positions
+    for (Line& line : goals){
+        line.optimize();
+    }
 
     const Line& start = goals.front();
     const auto boundary0Begin = pixels.findNeighborhood(start.points.front().x, start.points.front().y, OUTSIDE_COLOR);

@@ -13,7 +13,7 @@ namespace graphics {
 	class Renderer
 	{
 	public:
-		Renderer(const game::Map& map);
+		Renderer(const game::Map& map, float scale);
 
 		Direction getAction(const game::GameState& state, const game::GameHistory& history);
 	private:

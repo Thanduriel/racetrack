@@ -10,9 +10,9 @@ constexpr float goalThickness = 2.f;
 constexpr sf::Color gridColor(120, 120, 120);
 constexpr sf::Color historyColor(120, 180, 160);
 
-Renderer::Renderer(const game::Map& map)
+Renderer::Renderer(const game::Map& map, float scale)
     : m_map(map)
-    , m_scale(14.f)
+    , m_scale(scale)
     , m_window(sf::VideoMode({ static_cast<unsigned>((map.width + 2) * m_scale),
                    static_cast<unsigned>((map.height + 2) * m_scale) }),
           "Racetrack")

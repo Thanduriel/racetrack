@@ -21,19 +21,25 @@ Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerControlle
     , m_players(std::move(players))
     , m_history(m_players.size())
 {
-    const size_t startLength = m_map.start.points.size();
+    const auto& startPoints = m_map.start.points;
+    const size_t startLength = startPoints.size();
     const size_t numPlayers = m_players.size();
+
+    if (startLength < numPlayers) {
+        std::cerr << "[Error] There are more players than starting positions.\n";
+        std::abort();
+    }
 
     for (size_t i = 0; i < numPlayers; ++i) {
         // Spread players evenly along start with equal distance between
         // players and the walls.
         const size_t p = i * startLength / (numPlayers + 2);
-        m_state.playerStates.push_back({ .position = m_map.start.points[p],
+        m_state.playerStates.push_back({ .position = startPoints[p],
             .velocity = { },
             .goal = 0,
             .active = true });
 
-        m_history[i].points.push_back(m_map.start.points[p]);
+        m_history[i].points.push_back(startPoints[p]);
     }
 }
 
@@ -62,38 +68,25 @@ void Racetrack::run()
                 continue;
             }
 
-            // player decision
-            const Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map, m_history);
+            // player decision and movement
+            Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map, m_history);
             if (acceleration.lenSq() > 2) {
                 std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", m_state.activePlayer, acceleration);
-            } else {
-                state.velocity += acceleration;
+                acceleration = { 0, 0 };
             }
-
-            // movement step
-            Point prevPos = state.position;
-            state.position += state.velocity;
+            const MOVE_RESULT result = advance(state, acceleration, m_map);
 
             // record history
             m_history[player].points.push_back(state.position);
 
-            // check out of bounds
-            const LineSegment seg = { prevPos, state.position };
-            if (m_map.intersectBoundary(seg)) {
-                state.active = false;
-                // skip goal check
-                continue;
-            }
-
-            // check if goal was reached
-            if (m_map.goals[state.goal].intersect(seg)) {
-                ++state.goal;
-                if (state.goal >= static_cast<int>(m_map.goals.size())) {
-                    std::cout << std::format("Player {} finished!\n", player);
-                    finished = true;
-                } else {
-                    std::cout << std::format("Player {} reached goal {}!\n", player, state.goal - 1);
-                }
+            // check outcome
+            if (result == MOVE_RESULT::INVALID) {
+                std::cout << std::format("Player {} crashed!\n", player);
+            } else if (result == MOVE_RESULT::PASSED_GOAL) {
+                std::cout << std::format("Player {} reached goal {}!\n", player, state.goal - 1);
+            } else if (result == MOVE_RESULT::PASSED_FINAL_GOAL) {
+                std::cout << std::format("Player {} finished!\n", player);
+                finished = true;
             }
         }
 

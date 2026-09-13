@@ -1,6 +1,7 @@
 #pragma once
 
 #include <format>
+#include <cmath>
 
 namespace math {
 template <typename T>
@@ -19,6 +20,11 @@ struct Vec {
     constexpr T lenSq() const
     {
         return x * x + y * y;
+    }
+
+    constexpr float len() const
+    {
+        return std::sqrt(static_cast<float>(lenSq()));
     }
 };
 
@@ -46,6 +52,14 @@ T distSq(const Vec<T> a, const Vec<T> b)
     const Vec<T> diff = a - b;
     return diff.lenSq();
 }
+
+template <typename T>
+float dist(const Vec<T> a, const Vec<T> b)
+{
+    const Vec<T> diff = a - b;
+    return diff.len();
+}
+
 }
 
 template <typename T>

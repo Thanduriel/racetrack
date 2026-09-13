@@ -16,7 +16,20 @@ struct PlayerState {
     Direction velocity;
     int goal; //< next goal that has to be passed
     bool active;
+
+    LineSegment step(Direction acceleration);
 };
+
+enum struct MOVE_RESULT {
+    PASSED_FINAL_GOAL,
+    PASSED_GOAL,
+    INVALID,
+    OK
+};
+
+// advance player step and check rules
+MOVE_RESULT advance(PlayerState& state, Direction action, const Map& map);
+
 
 struct GameState {
     std::vector<PlayerState> playerStates;

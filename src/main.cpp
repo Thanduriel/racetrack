@@ -1,4 +1,5 @@
 #include "bots/snail.hpp"
+#include "bots/rollinghorizon.hpp"
 #include "game/game.hpp"
 
 #ifdef WITH_GRAPHICS
@@ -12,9 +13,10 @@ int main()
 
     std::vector<std::unique_ptr<game::PlayerController>> players;
     players.emplace_back(std::make_unique<bots::Snail>(0x632fa1b4));
+    players.emplace_back(std::make_unique<bots::RollingHorizon>(5));
 
 #ifdef WITH_GRAPHICS
-    graphics::Renderer renderer(map);
+    graphics::Renderer renderer(map, 8.f);
     players.emplace_back(std::make_unique<bots::UIBot>(renderer));
 #endif
 
