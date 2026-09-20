@@ -7,9 +7,9 @@ UIBot::UIBot(graphics::Renderer& renderer)
 {
 }
 
-std::string UIBot::name()
+std::string_view UIBot::name()
 {
-    return "user-input";
+    return "UserInput";
 }
 
 Direction UIBot::getAction(const game::GameState& state, const game::Map& map, const game::GameHistory& history)

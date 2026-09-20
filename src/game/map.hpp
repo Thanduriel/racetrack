@@ -8,7 +8,7 @@
 namespace game {
 // line on the lattice described by a sequence of points
 struct Line {
-    std::vector<Point> points;
+	std::vector<Point> points;
 
 	// remove redundant points
 	void optimize();
@@ -18,17 +18,17 @@ struct Line {
 // the map or actual racetrack
 class Map {
 public:
-    Map(const std::string& mapFilePath);
+	Map(const std::string& mapFilePath);
 
 	bool intersectBoundary(const LineSegment& segment) const;
 
-    unsigned width;
-    unsigned height;
+	unsigned width;
+	unsigned height;
 
-    Line boundary0;
-    Line boundary1;
+	Line boundary0;
+	Line boundary1;
 
 	Line start;
-    std::vector<Line> goals;
+	std::vector<Line> goals;
 };
 }

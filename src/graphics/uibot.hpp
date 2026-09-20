@@ -8,7 +8,7 @@ class UIBot : public game::PlayerController {
 public:
     UIBot(graphics::Renderer& renderer);
 
-    std::string name() override;
+    std::string_view name() override;
     Direction getAction(const game::GameState& state, const game::Map& map, const game::GameHistory& history) override;
 
 private:

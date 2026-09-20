@@ -1,20 +1,20 @@
 #pragma once
 
-#include "player.hpp"
 #include "map.hpp"
+#include "player.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace game {
 
 class Racetrack {
 public:
-    Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players);
+	Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players);
 
 	void step();
-    void run();
+	void run();
 
 private:
 	const Map& m_map;

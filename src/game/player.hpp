@@ -5,6 +5,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace game {
@@ -58,7 +59,7 @@ constexpr Direction toDirection(Action action);*/
 class PlayerController {
 public:
     virtual ~PlayerController() = default;
-    virtual std::string name() = 0;
+    virtual std::string_view name() = 0;
     virtual Direction getAction(const GameState& state, const Map& map, const GameHistory& history) = 0;
 };
 

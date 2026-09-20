@@ -1,7 +1,7 @@
 #pragma once
 
-#include "vector.hpp"
 #include "intersection.hpp"
+#include "vector.hpp"
 
 using IType = int;
 using Point = math::Vec<IType>;

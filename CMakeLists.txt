@@ -20,9 +20,9 @@ set_target_properties(racetrack PROPERTIES
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set(COMPILATION_OPTIONS 
         $<$<CONFIG:Debug>:-Wall;-pedantic>
-        $<$<CONFIG:RelWithDebInfo>:>
-        $<$<CONFIG:Release>: -O3;-DNDEBUG;-march=native > 
-        $<$<CONFIG:MinSizeRel>:>
+        $<$<CONFIG:RelWithDebInfo>:-Wall;-pedantic>
+        $<$<CONFIG:Release>:-Wall;-pedantic;-O3;-DNDEBUG;-march=native > 
+        $<$<CONFIG:MinSizeRel>:-Wall;-pedantic>
     )
     target_compile_options( racetrack PUBLIC "${COMPILATION_OPTIONS}" )
 endif()

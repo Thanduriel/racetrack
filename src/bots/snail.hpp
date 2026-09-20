@@ -12,8 +12,8 @@ class Snail : public game::PlayerController {
 public:
 	Snail(uint32_t seed);
 
-    std::string name() override;
-    Direction getAction(const game::GameState& state, const game::Map& map, const game::GameHistory& history) override;
+	std::string_view name() override;
+	Direction getAction(const game::GameState& state, const game::Map& map, const game::GameHistory& history) override;
 
 private:
 	int m_prevGoal;
