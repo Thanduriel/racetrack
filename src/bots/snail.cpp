@@ -18,7 +18,7 @@ std::string_view Snail::name() { return "Snail"; }
 
 Direction Snail::getAction(const GameState& gameState, const Map& map, const GameHistory& history)
 {
-	const PlayerState& state = gameState.getActive();
+	const PlayerState& state = gameState.getCurrent();
 
 	// recompute destination
 	if (m_prevGoal != state.goal) {

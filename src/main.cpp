@@ -12,8 +12,10 @@ int main()
 	game::Map map("tracks/loop.png");
 
 	std::vector<std::unique_ptr<game::PlayerController>> players;
-	players.emplace_back(std::make_unique<bots::Snail>(0x632fa1b4));
-	players.emplace_back(std::make_unique<bots::RollingHorizon<6>>());
+	//players.emplace_back(std::make_unique<bots::Snail>(0x632fa1b4));
+    players.emplace_back(std::make_unique<bots::RollingHorizon<5>>());
+    players.emplace_back(std::make_unique<bots::RollingHorizon<6>>());
+	players.emplace_back(std::make_unique<bots::RollingHorizon<7>>());
 
 #ifdef WITH_GRAPHICS
 	graphics::Renderer renderer(map, 16.f);

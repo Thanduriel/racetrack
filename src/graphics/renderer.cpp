@@ -27,7 +27,7 @@ Direction Renderer::getAction(const game::GameState& state, const std::vector<ga
 		// -1 to invert toScreenSpace, + 0.5 to get nodes, not cells when truncating (round to 0)
 		const auto pos = mouseWorld / m_scale - sf::Vector2f(0.5f, 0.5f);
 		const Point p = { static_cast<int>(pos.x), static_cast<int>(pos.y) };
-		const game::PlayerState& current = state.getActive();
+		const game::PlayerState& current = state.getCurrent();
 		const Direction d = p - (current.position + current.velocity);
 		const bool isValidAction = d.lenSq() <= 2;
 
@@ -102,7 +102,7 @@ void Renderer::draw(const game::GameState& state)
 	}
 
 	// current player
-	const game::PlayerState& current = state.getActive();
+	const game::PlayerState& current = state.getCurrent();
 	const Point dest = current.position + current.velocity;
 	const game::Line move { .points = { current.position, dest } };
 	draw(move, sf::Color::Green, 2.f);

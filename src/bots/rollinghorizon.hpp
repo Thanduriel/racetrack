@@ -26,7 +26,7 @@ public:
 		// first exploration
 		if (m_paths0.empty()) {
 			// root
-			m_paths0.push_back({ state.getActive(), 0.f, { } });
+			m_paths0.push_back({ state.getCurrent(), 0.f, { } });
 
 			for (int i = 0; i < MaxDepth; ++i) {
 				m_paths1.clear();

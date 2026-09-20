@@ -7,13 +7,15 @@
 
 namespace game {
 
-PlayerState& GameState::getActive()
+constexpr bool stopOnFirst = false;
+
+PlayerState& GameState::getCurrent()
 {
-	return playerStates[activePlayer];
+	return playerStates[currentPlayer];
 }
-const PlayerState& GameState::getActive() const
+const PlayerState& GameState::getCurrent() const
 {
-	return playerStates[activePlayer];
+	return playerStates[currentPlayer];
 }
 
 Racetrack::Racetrack(const Map& map, std::vector<std::unique_ptr<PlayerController>> players)
@@ -51,6 +53,7 @@ void Racetrack::run()
 	//    auto lastTime = std::chrono::high_resolution_clock::now();
 
 	while (!finished) {
+		++step;
 		/*   if (step % 10000 == 0) {
 			   auto now = std::chrono::high_resolution_clock::now();
 			   const float passed = std::chrono::duration<float>(now - lastTime).count();
@@ -60,8 +63,8 @@ void Racetrack::run()
 
 		bool noneActive = true;
 		for (size_t player = 0; player < m_players.size(); ++player) {
-			m_state.activePlayer = player;
-			PlayerState& state = m_state.getActive();
+			m_state.currentPlayer = player;
+			PlayerState& state = m_state.getCurrent();
 			if (state.active) {
 				noneActive = false;
 			} else {
@@ -70,12 +73,12 @@ void Racetrack::run()
 
 			// player decision and movement
 			const auto startTime = std::chrono::high_resolution_clock::now();
-			Direction acceleration = m_players[m_state.activePlayer]->getAction(m_state, m_map, m_history);
+			Direction acceleration = m_players[m_state.currentPlayer]->getAction(m_state, m_map, m_history);
 			const auto endTime = std::chrono::high_resolution_clock::now();
 			const auto duration = std::chrono::duration<float>(endTime - startTime);
-			std::cout << std::format("Player {} ({}) thought for {}s\n", m_state.activePlayer, m_players[m_state.activePlayer]->name(), duration.count());
+			std::cout << std::format("Player {} ({}) thought for {}s\n", m_state.currentPlayer, m_players[m_state.currentPlayer]->name(), duration.count());
 			if (acceleration.lenSq() > 2) {
-				std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", m_state.activePlayer, acceleration);
+				std::cout << std::format("[Warning] Ignoring Player {} input because of illegal action {}.\n", m_state.currentPlayer, acceleration);
 				acceleration = { 0, 0 };
 			}
 			const MOVE_RESULT result = advance(state, acceleration, m_map);
@@ -89,18 +92,18 @@ void Racetrack::run()
 			} else if (result == MOVE_RESULT::PASSED_GOAL) {
 				std::cout << std::format("Player {} reached goal {}!\n", player, state.goal - 1);
 			} else if (result == MOVE_RESULT::PASSED_FINAL_GOAL) {
-				std::cout << std::format("Player {} finished!\n", player);
-				finished = true;
+				std::cout << std::format("Player {} finished in {} steps!\n", player, step);
+				state.active = false;
+				if constexpr (stopOnFirst)
+					finished = true;
 			}
 		}
 
-		// everyone crashed
+		// everyone crashed or finished
 		if (noneActive) {
-			std::cout << "Game ends without a winner because everyone crashed.\n";
+			std::cout << "Game ends because there are no more active players.\n";
 			finished = true;
 		}
-
-		++step;
 	}
 
 	std::cout << std::format("Game ended after {} steps\n", step);

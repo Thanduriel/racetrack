@@ -34,10 +34,10 @@ MOVE_RESULT advance(PlayerState& state, Direction action, const Map& map);
 
 struct GameState {
     std::vector<PlayerState> playerStates;
-    size_t activePlayer;
+    size_t currentPlayer;
 
-    PlayerState& getActive();
-    const PlayerState& getActive() const;
+    PlayerState& getCurrent();
+    const PlayerState& getCurrent() const;
 };
 
 constexpr std::array<Direction, 9> ACTIONS = { { { 0, 0 },
