@@ -24,4 +24,5 @@ When running the game make sure that the working directory is correct for the ma
 There are slightly different versions of the game regarding:
  * *walls* A collision with a wall ends in a game over for the player.
  * *interactions* There are no collisions between players.
+
 The plan is to add switches for alternative rules in the future.
