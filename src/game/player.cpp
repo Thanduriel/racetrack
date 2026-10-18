@@ -11,6 +11,14 @@ LineSegment PlayerState::step(Direction acceleration)
 	return { prevPos, position };
 }
 
+bool operator==(const PlayerState& a, const PlayerState& b)
+{
+	return a.position == b.position
+		&& a.velocity == b.velocity
+		&& a.goal == b.goal
+		&& a.active && b.active;
+}
+
 MOVE_RESULT advance(PlayerState& state, Direction action, const Map& map)
 {
 	const LineSegment seg = state.step(action);

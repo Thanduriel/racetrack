@@ -60,6 +60,12 @@ float dist(const Vec<T> a, const Vec<T> b)
 	return diff.len();
 }
 
+template <typename T>
+constexpr bool operator==(const Vec<T> lhs, const Vec<T> rhs)
+{
+	return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
 }
 
 template <typename T>

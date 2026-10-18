@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../game/player.hpp"
-#include <deque>
+
 #include <vector>
 
 namespace bots {

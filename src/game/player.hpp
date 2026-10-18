@@ -21,6 +21,8 @@ struct PlayerState {
     LineSegment step(Direction acceleration);
 };
 
+bool operator==(const PlayerState& a, const PlayerState& b);
+
 enum struct MOVE_RESULT {
     PASSED_FINAL_GOAL,
     PASSED_GOAL,
@@ -28,7 +30,7 @@ enum struct MOVE_RESULT {
     OK
 };
 
-// advance player step and check rules
+// Advance player step and check rules. Does not change the active player.
 MOVE_RESULT advance(PlayerState& state, Direction action, const Map& map);
 
 

@@ -1,4 +1,6 @@
 #include "bots/rollinghorizon.hpp"
+//#include "bots/mcts.hpp"
+#include "bots/exhaustivesearch.hpp"
 #include "bots/snail.hpp"
 #include "game/game.hpp"
 
@@ -12,10 +14,12 @@ int main()
 	game::Map map("tracks/loop.png");
 
 	std::vector<std::unique_ptr<game::PlayerController>> players;
-	//players.emplace_back(std::make_unique<bots::Snail>(0x632fa1b4));
-    players.emplace_back(std::make_unique<bots::RollingHorizon<5>>());
-    players.emplace_back(std::make_unique<bots::RollingHorizon<6>>());
-	players.emplace_back(std::make_unique<bots::RollingHorizon<7>>());
+	// players.emplace_back(std::make_unique<bots::Snail>(0x632fa1b4));
+	players.emplace_back(std::make_unique<bots::RollingHorizon<5>>());
+	//   players.emplace_back(std::make_unique<bots::RollingHorizon<6>>());
+	//	players.emplace_back(std::make_unique<bots::RollingHorizon<7>>());
+	//players.emplace_back(std::make_unique<bots::MonteCarloTreeSearch>(2048));
+	players.emplace_back(std::make_unique<bots::ExhaustiveSearch>());
 
 #ifdef WITH_GRAPHICS
 	graphics::Renderer renderer(map, 16.f);
