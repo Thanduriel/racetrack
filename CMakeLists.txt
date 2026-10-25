@@ -13,7 +13,7 @@ endif ()
 
 add_executable(racetrack ${SOURCE_FILES})
 set_target_properties(racetrack PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED YES
 )
 

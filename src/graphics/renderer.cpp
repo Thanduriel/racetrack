@@ -1,5 +1,8 @@
 #include "renderer.hpp"
 
+#include <ranges>
+#include <iostream>
+
 namespace graphics {
 
 constexpr float gridThickness = 1.f;
@@ -9,6 +12,13 @@ constexpr float goalThickness = 2.f;
 
 constexpr sf::Color gridColor(120, 120, 120);
 constexpr sf::Color historyColor(120, 180, 160);
+constexpr std::array<sf::Color, 8> playerColors = { { { 68, 119, 170 },
+	{ 102, 204, 238 },
+	{ 34, 136, 51 },
+	{ 204, 187, 68 },
+	{ 238, 102, 119 },
+	{ 170, 51, 119 },
+	{ 187, 187, 187 } }};
 
 Renderer::Renderer(const game::Map& map, float scale)
 	: m_map(map)
@@ -96,8 +106,9 @@ void Renderer::draw(const game::GameState& state)
 	sf::CircleShape playerShape(playerSize);
 	playerShape.setOrigin({ playerSize, playerSize });
 	playerShape.setFillColor(sf::Color::Red);
-	for (const game::PlayerState& playerState : state.playerStates) {
+	for (const auto& [playerState, color] : std::views::zip(state.playerStates, playerColors)) {
 		playerShape.setPosition(toScreenSpace(playerState.position));
+		playerShape.setFillColor(color);
 		m_window.draw(playerShape);
 	}
 
@@ -120,8 +131,8 @@ void Renderer::draw(const game::GameState& state)
 
 void Renderer::draw(const game::GameHistory& history)
 {
-	for (const game::Line& line : history) {
-		draw(line, historyColor, historyThickness, m_scale * 0.75f);
+	for (const auto& [line, color] : std::views::zip(history, playerColors)) {
+		draw(line, color, historyThickness, m_scale * 0.75f);
 	}
 }
 
