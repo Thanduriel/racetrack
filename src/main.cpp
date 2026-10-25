@@ -1,5 +1,5 @@
 #include "bots/rollinghorizon.hpp"
-//#include "bots/mcts.hpp"
+// #include "bots/mcts.hpp"
 #include "bots/exhaustivesearch.hpp"
 #include "bots/snail.hpp"
 #include "game/game.hpp"
@@ -18,8 +18,8 @@ int main()
 	players.emplace_back(std::make_unique<bots::RollingHorizon<5>>());
 	//   players.emplace_back(std::make_unique<bots::RollingHorizon<6>>());
 	//	players.emplace_back(std::make_unique<bots::RollingHorizon<7>>());
-	//players.emplace_back(std::make_unique<bots::MonteCarloTreeSearch>(2048));
-	players.emplace_back(std::make_unique<bots::ExhaustiveSearch>());
+	// players.emplace_back(std::make_unique<bots::MonteCarloTreeSearch>(2048));
+	players.emplace_back(std::make_unique<bots::ExhaustiveSearch>(std::make_unique<bots::RollingHorizon<5>>()));
 
 #ifdef WITH_GRAPHICS
 	graphics::Renderer renderer(map, 16.f);

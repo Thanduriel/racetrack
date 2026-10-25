@@ -44,6 +44,11 @@ int StateCache::longestPath() const
 }
 
 // ********************************************** //
+ExhaustiveSearch::ExhaustiveSearch(std::unique_ptr<game::PlayerController> preconditioner)
+	: m_preconditioner(std::move(preconditioner))
+{
+}
+
 std::string_view ExhaustiveSearch::name() { return "ExhaustiveSearch"; }
 
 Direction ExhaustiveSearch::getAction(const GameState& state, const Map& map, const GameHistory& history)
@@ -62,10 +67,30 @@ void ExhaustiveSearch::buildPath(const GameState& state, const Map& map, const G
 	const PlayerState& baseState = state.getCurrent();
 	StateCache cache(baseState);
 
-	std::vector<PlayerState> statesToCheck { baseState };
-//	std::vector<PlayerState> finalStates;
 	PlayerState bestFinalState;
 	int numBestFinalSteps = std::numeric_limits<int>::max();
+
+	// populate cache with a decent path that determines a better lower limit
+	if (m_preconditioner) {
+		GameState currentState = state;
+		PlayerState& currentPlayerState = currentState.getCurrent();
+		MOVE_RESULT r;
+		int steps;
+		do {
+			PlayerState nextPlayerState = currentPlayerState;
+			r = advance(nextPlayerState, m_preconditioner->getAction(currentState, map, history), map);
+			// we assume that the simpler bot does not produce loops
+			steps = *cache.add(nextPlayerState, currentPlayerState);
+			currentPlayerState = nextPlayerState;
+		} while (r != MOVE_RESULT::PASSED_FINAL_GOAL && r != MOVE_RESULT::INVALID);
+
+		if (r == MOVE_RESULT::PASSED_FINAL_GOAL) {
+			bestFinalState = currentPlayerState;
+			numBestFinalSteps = steps;
+		}
+	}
+
+	std::vector<PlayerState> statesToCheck { baseState };
 	size_t numStatesChecked = 0;
 	size_t numStateImprovements = 0;
 
@@ -112,9 +137,9 @@ void ExhaustiveSearch::buildPath(const GameState& state, const Map& map, const G
 		m_futureActions.push_back(ACTIONS[1]);
 	}
 
-/*	const PlayerState& bestPathEnd = *std::min_element(finalStates.begin(), finalStates.end(), [&cache](const PlayerState& lhs, const PlayerState& rhs) {
-		return cache.at(lhs).steps < cache.at(rhs).steps;
-	});*/
+	/*	const PlayerState& bestPathEnd = *std::min_element(finalStates.begin(), finalStates.end(), [&cache](const PlayerState& lhs, const PlayerState& rhs) {
+			return cache.at(lhs).steps < cache.at(rhs).steps;
+		});*/
 
 	const PlayerState* pathState = &bestFinalState;
 	const StateCache::PathInfo* info = nullptr;

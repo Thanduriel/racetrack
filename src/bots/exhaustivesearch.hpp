@@ -6,6 +6,7 @@
 #include <optional>
 #include <random>
 #include <unordered_map>
+#include <memory>
 
 inline void hash_combine(std::size_t& seed) { }
 
@@ -51,6 +52,8 @@ private:
 
 class ExhaustiveSearch : public game::PlayerController {
 public:
+	ExhaustiveSearch(std::unique_ptr<game::PlayerController> preconditioner = nullptr);
+
 	std::string_view name() override;
 	Direction getAction(const game::GameState& state, const game::Map& map, const game::GameHistory& history) override;
 
@@ -58,6 +61,7 @@ private:
 	void buildPath(const game::GameState& state, const game::Map& map, const game::GameHistory& history);
 
 	std::vector<Direction> m_futureActions;
+	std::unique_ptr<game::PlayerController> m_preconditioner;
 };
 
 }
